@@ -25,6 +25,8 @@ class Config
     protected $userAgent = 'TwitterAdsPhpSdk';
     /** @var array Store proxy connection details */
     protected $proxy = [];
+    /** @var string|null */
+    protected $caInfo = null;
 
     /**
      * Set the connection and response timeouts.
@@ -60,5 +62,17 @@ class Config
     public function setProxy(array $proxy)
     {
         $this->proxy = $proxy;
+    }
+
+    /**
+     * CA certificates used to verify the TLS peer: a PEM bundle file or a hashed certificate directory.
+     * null (default) = php.ini curl.cainfo, else the system store (SSL_CERT_FILE / SSL_CERT_DIR / OpenSSL defaults),
+     * else the bundled src/cacert.pem.
+     *
+     * @param string|null $path
+     */
+    public function setCaInfo($path)
+    {
+        $this->caInfo = ($path === null || $path === '') ? null : (string)$path;
     }
 }

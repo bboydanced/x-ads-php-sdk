@@ -4,8 +4,14 @@
         bootstrap="tests/bootstrap.php">
 
     <testsuites>
-        <testsuite name="TwitterAds Test Suite">
+        <!-- Offline: no network, no credentials. -->
+        <testsuite name="Unit">
+            <directory>./tests/Unit/</directory>
+        </testsuite>
+        <!-- WARNING: hits the real Ads API with TEST_* env credentials and creates/deletes entities. -->
+        <testsuite name="Integration">
             <directory>./tests/</directory>
+            <exclude>./tests/Unit/</exclude>
         </testsuite>
     </testsuites>
 </phpunit>

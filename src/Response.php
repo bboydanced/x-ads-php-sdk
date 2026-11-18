@@ -82,11 +82,20 @@ class Response
     }
 
     /**
+     * @return array Header names are lower-cased with '-' replaced by '_' (e.g. x_rate_limit_reset)
+     */
+    public function getHeaders()
+    {
+        return $this->headers;
+    }
+
+    /**
+     * @deprecated use getHeaders()
      * @return array
      */
     public function getsHeaders()
     {
-        return $this->headers;
+        return $this->getHeaders();
     }
 
     /**

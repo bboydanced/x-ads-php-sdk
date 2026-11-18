@@ -19,7 +19,7 @@ class TwitterAdsException extends Exception
 
     private $errors;
 
-    public function __construct($message, $code, Exception $previous = null, $errors)
+    public function __construct($message, $code, ?Exception $previous = null, $errors = null)
     {
         parent::__construct($message, $code, $previous);
         $this->errors = $errors;

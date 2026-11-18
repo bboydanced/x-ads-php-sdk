@@ -49,11 +49,11 @@ class TONUpload
     {
         if ($this->fileSize < self::MIN_FILE_SIZE) {
             $response = $this->upload();
-            return $response->getsHeaders()['location'];
+            return $response->getHeaders()['location'];
         }
 
         $response = $this->initChunkedUpload();
-        $responseHeaders = $response->getsHeaders();
+        $responseHeaders = $response->getHeaders();
         $chunkSize = intval($responseHeaders['x_ton_min_chunk_size']);
         $location = $responseHeaders['location'];
 

@@ -19,6 +19,8 @@ class RateLimit extends TwitterAdsException
      * @var mixed
      */
     private $resetAt;
+    private $limit;
+    private $remaining;
 
     /**
      * RateLimit constructor.
@@ -28,11 +30,20 @@ class RateLimit extends TwitterAdsException
      * @param $errors
      * @param $headers
      */
-    public function __construct($message, $code, Exception $previous = null, $errors, $headers)
+    public function __construct($message, $code, ?Exception $previous = null, $errors = null, $headers = [])
     {
-        parent::__construct($message, $code, null, $errors);
-        $this->retryAfter = $headers['x_rate_limit_limit'] ? $headers['x_rate_limit_limit'] : '';
-        $this->resetAt = $headers['x_rate_limit_reset'] ? $headers['x_rate_limit_reset'] : '';
+        parent::__construct($message, $code, $previous, $errors);
+        $headers = is_array($headers) ? $headers : [];
+        $this->resetAt = isset($headers['x_rate_limit_reset']) ? $headers['x_rate_limit_reset'] : '';
+        $this->limit = isset($headers['x_rate_limit_limit']) ? $headers['x_rate_limit_limit'] : '';
+        $this->remaining = isset($headers['x_rate_limit_remaining']) ? $headers['x_rate_limit_remaining'] : '';
+        if (isset($headers['retry_after'])) {
+            $this->retryAfter = $headers['retry_after'];
+        } elseif ($this->resetAt !== '') {
+            $this->retryAfter = (string)max(0, (int)$this->resetAt - time());
+        } else {
+            $this->retryAfter = '';
+        }
     }
 
     /**
@@ -49,5 +60,21 @@ class RateLimit extends TwitterAdsException
     public function getResetAt()
     {
         return $this->resetAt;
+    }
+
+    /**
+     * @return string Request quota of the current window (x-rate-limit-limit)
+     */
+    public function getLimit()
+    {
+        return $this->limit;
+    }
+
+    /**
+     * @return string Requests left in the current window (x-rate-limit-remaining)
+     */
+    public function getRemaining()
+    {
+        return $this->remaining;
     }
 }

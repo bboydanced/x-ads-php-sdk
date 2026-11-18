@@ -22,7 +22,7 @@ abstract class Batch extends Resource
      * @param int $batchSize
      * @param array $batch
      */
-    public function __construct(TwitterAds $twitterAds = null, $batchSize = 10, $batch = [])
+    public function __construct(?TwitterAds $twitterAds = null, $batchSize = 10, $batch = [])
     {
         parent::__construct('', $twitterAds);
         $this->batchSize = $batchSize;

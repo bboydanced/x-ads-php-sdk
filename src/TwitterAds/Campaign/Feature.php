@@ -32,7 +32,7 @@ class Feature
      * @param TwitterAds|null $instance
      * @return TwitterAds|null
      */
-    protected static function assureApi(TwitterAds $instance = null)
+    protected static function assureApi(?TwitterAds $instance = null)
     {
         $instance = $instance ?: TwitterAds::instance();
         if (!$instance) {

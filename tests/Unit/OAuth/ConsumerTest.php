@@ -1,6 +1,6 @@
 <?php
 
-namespace Hborras\TwitterAdsSDK\Tests;
+namespace Hborras\TwitterAdsSDK\Tests\Unit\OAuth;
 
 use Hborras\TwitterAdsSDK\Consumer;
 use PHPUnit\Framework\TestCase;

@@ -18,8 +18,8 @@ class Forbidden extends TwitterAdsException
      * @param Exception|null $previous
      * @param $errors
      */
-    public function __construct($message, $code, Exception $previous = null, $errors)
+    public function __construct($message, $code, ?Exception $previous = null, $errors = null)
     {
-        parent::__construct($message, $code, null, $errors);
+        parent::__construct($message, $code, $previous, $errors);
     }
 }

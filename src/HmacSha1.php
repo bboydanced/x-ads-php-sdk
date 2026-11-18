@@ -25,7 +25,7 @@ class HmacSha1 extends SignatureMethod
     /**
      * {@inheritdoc}
      */
-    public function buildSignature(Request $request, Consumer $consumer, Token $token = null)
+    public function buildSignature(Request $request, Consumer $consumer, ?Token $token = null)
     {
         $signatureBase = $request->getSignatureBaseString();
 

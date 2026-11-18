@@ -16,6 +16,7 @@ use Hborras\TwitterAdsSDK\TwitterAds\Errors\ServerError;
  * Class Resource
  * @package Hborras\TwitterAdsSDK\TwitterAds
  */
+#[\AllowDynamicProperties]
 abstract class Resource implements Arrayable
 {
     use DateTimeFormatter;
@@ -41,7 +42,7 @@ abstract class Resource implements Arrayable
      * @param null $id
      * @param TwitterAds $twitterAds
      */
-    public function __construct($id = null, TwitterAds $twitterAds = null)
+    public function __construct($id = null, ?TwitterAds $twitterAds = null)
     {
         $this->id = $id;
         $this->twitterAds = static::assureApi($twitterAds);
@@ -51,7 +52,7 @@ abstract class Resource implements Arrayable
      * @param TwitterAds|null $instance
      * @return TwitterAds|null
      */
-    protected static function assureApi(TwitterAds $instance = null)
+    protected static function assureApi(?TwitterAds $instance = null)
     {
         $instance = $instance ?: TwitterAds::instance();
         if (!$instance) {

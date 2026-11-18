@@ -20,14 +20,16 @@ use Hborras\TwitterAdsSDK\TwitterAds\Errors\ServiceUnavailable;
  */
 class TwitterAds extends Config
 {
-    const API_VERSION      = '11';
+    const API_VERSION      = '12';
     const API_REST_VERSION = '1.1';
-    const API_HOST = 'https://ads-api.twitter.com';
+    const API_HOST = 'https://ads-api.x.com';
     const API_HOST_SANDBOX = 'https://ads-api-sandbox.twitter.com';
-    const API_HOST_OAUTH = 'https://api.twitter.com';
+    const API_HOST_OAUTH = 'https://api.x.com';
+    /** @deprecated v1.1 media upload is legacy on X; upload via the X API v2 media endpoints instead. */
     const UPLOAD_HOST = 'https://upload.twitter.com';
     const UPLOAD_PATH = 'media/upload.json';
     const UPLOAD_CHUNK = 40960; // 1024 * 40
+    const UPLOAD_MAX_STATUS_CHECKS = 60;
 
     /** @var TwitterAds */
     protected static $instance;
@@ -136,6 +138,36 @@ class TwitterAds extends Config
     }
 
     /**
+     * Authenticate with an OAuth 2.0 Bearer token (user access token or app-only token) instead of OAuth 1.0a.
+     *
+     * @param string|null $bearerToken null switches back to OAuth 1.0a signing
+     */
+    public function setBearerToken($bearerToken)
+    {
+        $this->bearer = ($bearerToken === null || $bearerToken === '') ? null : (string)$bearerToken;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getBearerToken()
+    {
+        return $this->bearer;
+    }
+
+    /**
+     * @param string $consumerKey
+     * @param string $consumerSecret
+     * @param string $bearerToken
+     * @param bool $sandbox
+     * @return static
+     */
+    public static function initWithBearer($consumerKey, $consumerSecret, $bearerToken, $sandbox = false)
+    {
+        return static::init($consumerKey, $consumerSecret, '', $bearerToken, null, $sandbox);
+    }
+
+    /**
      * @return string|null
      */
     public function getLastApiPath()
@@ -189,7 +221,7 @@ class TwitterAds extends Config
         $this->response->setApiPath($path);
         $query = http_build_query($parameters);
 
-        return sprintf('%s/%s?%s', self::API_HOST_OAUTH, $path, $query);
+        return sprintf('%s/%s?%s', static::API_HOST_OAUTH, $path, $query);
     }
 
     /**
@@ -205,7 +237,7 @@ class TwitterAds extends Config
         $response = [];
         $this->resetLastResponse();
         $this->response->setApiPath($path);
-        $url = sprintf('%s/%s', self::API_HOST_OAUTH, $path);
+        $url = sprintf('%s/%s', static::API_HOST_OAUTH, $path);
         $result = $this->oAuthRequest($url, 'POST', $parameters);
 
         if ($this->getLastHttpCode() != 200) {
@@ -232,7 +264,7 @@ class TwitterAds extends Config
         $method = 'POST';
         $this->resetLastResponse();
         $this->response->setApiPath($path);
-        $url = sprintf('%s/%s', self::API_HOST_OAUTH, $path);
+        $url = sprintf('%s/%s', static::API_HOST_OAUTH, $path);
         $request = Request::fromConsumerAndToken($this->consumer, $this->token, $method, $url, $parameters);
         $authorization = 'Authorization: Basic ' . $this->encodeAppAuthorization($this->consumer);
         $result = $this->request($request->getNormalizedHttpUrl(), $method, $authorization, $parameters);
@@ -244,7 +276,7 @@ class TwitterAds extends Config
 
     public function verifyCredentials($parameters = [])
     {
-        return $this->http('GET', self::API_HOST_OAUTH, 'account/verify_credentials', $parameters);
+        return $this->http('GET', static::API_HOST_OAUTH, 'account/verify_credentials', $parameters);
     }
 
     /**
@@ -265,7 +297,7 @@ class TwitterAds extends Config
      */
     public function get($path, array $parameters = [])
     {
-        return $this->http('GET', !$this->sandbox ? self::API_HOST : self::API_HOST_SANDBOX, $path, $parameters);
+        return $this->http('GET', !$this->sandbox ? static::API_HOST : static::API_HOST_SANDBOX, $path, $parameters);
     }
 
     /**
@@ -287,7 +319,7 @@ class TwitterAds extends Config
      */
     public function post($path, array $parameters = [], array $headers = [])
     {
-        return $this->http('POST', !$this->sandbox ? self::API_HOST : self::API_HOST_SANDBOX, $path, $parameters, $headers);
+        return $this->http('POST', !$this->sandbox ? static::API_HOST : static::API_HOST_SANDBOX, $path, $parameters, $headers);
     }
 
     /**
@@ -308,7 +340,7 @@ class TwitterAds extends Config
      */
     public function delete($path, array $parameters = [])
     {
-        return $this->http('DELETE', !$this->sandbox ? self::API_HOST : self::API_HOST_SANDBOX, $path, $parameters);
+        return $this->http('DELETE', !$this->sandbox ? static::API_HOST : static::API_HOST_SANDBOX, $path, $parameters);
     }
 
     /**
@@ -330,7 +362,7 @@ class TwitterAds extends Config
      */
     public function put($path, array $parameters = [], array $headers = [])
     {
-        return $this->http('PUT', !$this->sandbox ? self::API_HOST : self::API_HOST_SANDBOX, $path, $parameters, $headers);
+        return $this->http('PUT', !$this->sandbox ? static::API_HOST : static::API_HOST_SANDBOX, $path, $parameters, $headers);
     }
 
     /**
@@ -352,10 +384,10 @@ class TwitterAds extends Config
     public function upload(array $parameters = [], $chunked = false)
     {
         if ($chunked) {
-            return $this->uploadMediaChunked(self::UPLOAD_PATH, $parameters);
+            return $this->uploadMediaChunked(static::UPLOAD_PATH, $parameters);
         }
 
-        return $this->uploadMediaNotChunked(self::UPLOAD_PATH, $parameters)->getBody();
+        return $this->uploadMediaNotChunked(static::UPLOAD_PATH, $parameters)->getBody();
     }
 
     /**
@@ -380,7 +412,7 @@ class TwitterAds extends Config
         $base = base64_encode($file);
         $parameters['media'] = $base;
 
-        return $this->http('POST', self::UPLOAD_HOST, $path, $parameters);
+        return $this->http('POST', static::UPLOAD_HOST, $path, $parameters);
     }
 
     /**
@@ -423,7 +455,7 @@ class TwitterAds extends Config
 
         $init = $this->http(
             'POST',
-            self::UPLOAD_HOST,
+            static::UPLOAD_HOST,
             $path,
             $initParameters
         )->getBody();
@@ -434,13 +466,13 @@ class TwitterAds extends Config
         while (!feof($media)) {
             $this->http(
                 'POST',
-                self::UPLOAD_HOST,
+                static::UPLOAD_HOST,
                 $path,
                 [
                     'command' => 'APPEND',
                     'media_id' => $init->media_id_string,
                     'segment_index' => $segment_index++,
-                    'media_data' => base64_encode(fread($media, self::UPLOAD_CHUNK)),
+                    'media_data' => base64_encode(fread($media, static::UPLOAD_CHUNK)),
                 ]
             )->getBody();
         }
@@ -448,7 +480,7 @@ class TwitterAds extends Config
         // Finalize
         $finalize = $this->http(
             'POST',
-            self::UPLOAD_HOST,
+            static::UPLOAD_HOST,
             $path,
             [
                 'command' => 'FINALIZE',
@@ -456,17 +488,23 @@ class TwitterAds extends Config
             ]
         )->getBody();
 
+        $statusChecks = 0;
         while (isset($finalize->processing_info)) {
-            if (isset($finalize->processing_info->check_after_secs)) {
-                sleep($finalize->processing_info->check_after_secs);
-                $data = array(
-                    'command' => 'STATUS',
-                    'media_id' => $finalize->media_id
-                );
-                $finalize = $this->http('GET', self::UPLOAD_HOST, $path, $data)->getBody();
-            } elseif (isset($finalize->processing_info->state) && $finalize->processing_info->state == 'succeeded') {
+            $state = isset($finalize->processing_info->state) ? $finalize->processing_info->state : null;
+            if ($state === 'succeeded') {
                 break;
             }
+            if ($state === 'failed') {
+                throw new TwitterAdsException('Media processing failed', 500, null, $finalize->processing_info);
+            }
+            if (!isset($finalize->processing_info->check_after_secs) || ++$statusChecks > static::UPLOAD_MAX_STATUS_CHECKS) {
+                throw new TwitterAdsException('Media processing did not finish', 500, null, $finalize->processing_info);
+            }
+            sleep((int)$finalize->processing_info->check_after_secs);
+            $finalize = $this->http('GET', static::UPLOAD_HOST, $path, [
+                'command' => 'STATUS',
+                'media_id' => $finalize->media_id_string ?? $finalize->media_id,
+            ])->getBody();
         }
 
         return $finalize;
@@ -495,10 +533,10 @@ class TwitterAds extends Config
         $this->resetLastResponse();
         if (strpos($path, TONUpload::DEFAULT_DOMAIN) === 0) {
             $url = $path;
-        } elseif ($host == self::UPLOAD_HOST) {
-            $url = sprintf('%s/%s/%s', $host, self::API_REST_VERSION, $path);
+        } elseif ($host == static::UPLOAD_HOST) {
+            $url = sprintf('%s/%s/%s', $host, static::API_REST_VERSION, $path);
         } else {
-            $url = sprintf('%s/%s/%s', $host, self::API_VERSION, $path);
+            $url = sprintf('%s/%s/%s', $host, static::API_VERSION, $path);
         }
 
         $this->response->setApiPath($path);
@@ -524,10 +562,11 @@ class TwitterAds extends Config
     public function manageErrors($response)
     {
         $errors = [];
-        if(isset($response->errors)){
-            $errors = $response->errors;
-        } else if(isset($response->operation_errors)){
-            $errors = $response->operation_errors;
+        $body = is_array($response) ? (object)$response : $response;
+        if (isset($body->errors)) {
+            $errors = $body->errors;
+        } elseif (isset($body->operation_errors)) {
+            $errors = $body->operation_errors;
         }
 
         switch ($this->getLastHttpCode()) {
@@ -540,11 +579,11 @@ class TwitterAds extends Config
             case 404:
                 throw new NotFound(TwitterAdsException::NOT_FOUND, 404, null, $errors);
             case 429:
-                throw new RateLimit(TwitterAdsException::RATE_LIMIT, 429, null, $errors, $this->response->getsHeaders());
+                throw new RateLimit(TwitterAdsException::RATE_LIMIT, 429, null, $errors, $this->response->getHeaders());
             case 500:
                 throw new ServerError(TwitterAdsException::SERVER_ERROR, 500, null, $errors);
             case 503:
-                throw new ServiceUnavailable(TwitterAdsException::SERVICE_UNAVAILABLE, 503, null, $errors, $this->response->getsHeaders());
+                throw new ServiceUnavailable(TwitterAdsException::SERVICE_UNAVAILABLE, 503, null, $errors, $this->response->getHeaders());
             default:
                 throw new ServerError(TwitterAdsException::SERVER_ERROR, 500, null, $errors);
         }
@@ -598,7 +637,6 @@ class TwitterAds extends Config
         /* Curl settings */
         $options = [
             CURLOPT_VERBOSE => false,
-            CURLOPT_CAINFO => __DIR__ . DIRECTORY_SEPARATOR . 'cacert.pem',
             CURLOPT_CONNECTTIMEOUT => $this->connectionTimeout,
             CURLOPT_HEADER => true,
             CURLOPT_HTTPHEADER => array_merge(['Accept: */*', $authorization, 'Expect:'], $headers, ['Connection: close']),
@@ -609,7 +647,7 @@ class TwitterAds extends Config
             CURLOPT_URL => $url,
             CURLOPT_USERAGENT => $this->userAgent,
             CURLOPT_ENCODING => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        ];
+        ] + $this->caOptions();
 
         if (!empty($this->proxy)) {
             $options[CURLOPT_PROXY] = $this->proxy['CURLOPT_PROXY'];
@@ -642,6 +680,10 @@ class TwitterAds extends Config
                 $options[CURLOPT_CUSTOMREQUEST] = 'PUT';
                 if (isset($postfields['raw'])) {
                     $options[CURLOPT_POSTFIELDS] = $postfields['raw'];
+                    $options[CURLOPT_HTTPHEADER] = array_merge($options[CURLOPT_HTTPHEADER], [
+                        'Content-Type: application/json',
+                        'Content-Length: '. strlen($postfields['raw'])
+                    ]);
                 }
                 break;
         }
@@ -658,12 +700,43 @@ class TwitterAds extends Config
             throw new TwitterAdsException(curl_error($curlHandle), curl_errno($curlHandle), null, null);
         }
         $this->response->setHttpCode(curl_getinfo($curlHandle, CURLINFO_HTTP_CODE));
-        $parts = explode("\r\n\r\n", $response);
-        $responseBody = array_pop($parts);
-        $responseHeader = array_pop($parts);
-        $this->response->setHeaders($this->parseHeaders($responseHeader));
-        curl_close($curlHandle);
+        // Header block size covers every block (100 Continue, proxy CONNECT, redirects); keep only the last one.
+        $headerSize = (int)curl_getinfo($curlHandle, CURLINFO_HEADER_SIZE);
+        $headerBlocks = explode("\r\n\r\n", trim(substr($response, 0, $headerSize)));
+        $responseBody = (string)substr($response, $headerSize);
+        $this->response->setHeaders($this->parseHeaders((string)end($headerBlocks)));
+        if (PHP_VERSION_ID < 80000) {
+            curl_close($curlHandle);
+        }
         return $responseBody;
+    }
+
+    /**
+     * cURL CA options. Order: setCaInfo() > php.ini curl.cainfo > system store > bundled cacert.pem.
+     * The system store is set explicitly because static PHP/cURL builds may not know the OS default path.
+     *
+     * @return array
+     */
+    protected function caOptions()
+    {
+        if ($this->caInfo !== null) {
+            return [is_dir($this->caInfo) ? CURLOPT_CAPATH : CURLOPT_CAINFO => $this->caInfo];
+        }
+        if (ini_get('curl.cainfo')) {
+            return [];
+        }
+
+        $locations = function_exists('openssl_get_cert_locations') ? openssl_get_cert_locations() : [];
+        $file = getenv('SSL_CERT_FILE') ?: (isset($locations['default_cert_file']) ? $locations['default_cert_file'] : '');
+        if ($file !== '' && is_file($file) && is_readable($file)) {
+            return [CURLOPT_CAINFO => $file];
+        }
+        $dir = getenv('SSL_CERT_DIR') ?: (isset($locations['default_cert_dir']) ? $locations['default_cert_dir'] : '');
+        if ($dir !== '' && is_dir($dir) && is_readable($dir)) {
+            return [CURLOPT_CAPATH => $dir];
+        }
+
+        return [CURLOPT_CAINFO => __DIR__ . DIRECTORY_SEPARATOR . 'cacert.pem'];
     }
 
     /**
@@ -678,8 +751,8 @@ class TwitterAds extends Config
         $headers = [];
         foreach (explode("\r\n", $header) as $line) {
             if (strpos($line, ':') !== false) {
-                list($key, $value) = explode(': ', $line);
-                $key = str_replace('-', '_', strtolower($key));
+                list($key, $value) = explode(':', $line, 2);
+                $key = str_replace('-', '_', strtolower(trim($key)));
                 $headers[$key] = trim($value);
             }
         }

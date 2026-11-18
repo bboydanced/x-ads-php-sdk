@@ -9,6 +9,6 @@ class PromotedTweetPutNotAllowedException extends Exception
 {
     public function __construct()
     {
-        parent::__construct(500, 'PromotedTweetPutNotAllowedException');
+        parent::__construct('PromotedTweetPutNotAllowedException', 500);
     }
 }

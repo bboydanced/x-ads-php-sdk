@@ -21,15 +21,15 @@ class TwitterAdsTest extends TestCase
 
     public function testBuildClient(): void
     {
-        self::assertObjectHasAttribute('consumer', $this->api);
-        self::assertObjectHasAttribute('token', $this->api);
+        self::assertTrue(property_exists($this->api, 'consumer'));
+        self::assertTrue(property_exists($this->api, 'token'));
     }
 
     public function testSetOauthToken(): void
     {
         $this->api->setOauthToken(ACCESS_TOKEN, ACCESS_TOKEN_SECRET);
-        self::assertObjectHasAttribute('consumer', $this->api);
-        self::assertObjectHasAttribute('token', $this->api);
+        self::assertTrue(property_exists($this->api, 'consumer'));
+        self::assertTrue(property_exists($this->api, 'token'));
         $this->api->get('accounts');
         self::assertEquals(200, $this->api->getLastHttpCode());
     }
@@ -38,8 +38,8 @@ class TwitterAdsTest extends TestCase
     {
         $result = $this->api->oauth2('oauth2/token', array('grant_type' => 'client_credentials'));
         self::assertEquals(200, $this->api->getLastHttpCode());
-        self::assertObjectHasAttribute('token_type', $result);
-        self::assertObjectHasAttribute('access_token', $result);
+        self::assertTrue(property_exists($result, 'token_type'));
+        self::assertTrue(property_exists($result, 'access_token'));
         self::assertEquals('bearer', $result->token_type);
         return $result;
     }

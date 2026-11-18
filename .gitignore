@@ -4,3 +4,5 @@ vendor
 tests/.env
 .idea
 private_examples/*
+.phpunit.result.cache
+.phpunit.cache
